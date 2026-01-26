@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<link rel="icon" type="image/svg+xml" href="/vite.svg">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Vite + Lit + TS</title>
+		<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+		<script type="module" src="/src/index.ts"></script>
+	</head>
+	<body x-data>
+		<div>
+			<h5>Default</h5>
+			<twzipcode-fieldset
+				:default-values="JSON.stringify({ zipcode: '300', county: '新竹市', district: '香山區' })"
+				:ignore-options="JSON.stringify(['臺北市', { 宜蘭縣: ['釣魚臺列嶼'] }])"
+				@done="console.log('done:', $event.detail.value)"
+			></twzipcode-fieldset>
+		</div>
+		<br>
+		<div>
+			<h5>Custom</h5>
+			<twzipcode-fieldset>
+				<div>
+					<label>測試</label>
+					<zipcode-field></zipcode-field>
+				</div>
+				<county-field></county-field>
+				<district-field></district-field>
+			</twzipcode-fieldset>
+		</div>
+	</body>
+</html>
