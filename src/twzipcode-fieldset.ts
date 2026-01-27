@@ -71,7 +71,7 @@ export class TwzipcodeFieldset extends LitElement {
 
 	updated(changedProps: PropertyValues) {
 		if (changedProps.has('_data')) {
-			this.$_county?.reload(this.lang)
+			this.$_county?.reload()
 		}
 
 		if (changedProps.has('value')) {

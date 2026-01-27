@@ -15,7 +15,7 @@ export declare class CountyField extends LitElement {
     readonly tag = "county";
     private _counties;
     updated(changedProps: PropertyValues): void;
-    reload(lang: Lang): void;
+    reload(): void;
     ignore(list: County[]): void;
     findAndSelect(data: TwZipcodeData[], particalZipcode: string): void;
     select(value: County | ''): void;

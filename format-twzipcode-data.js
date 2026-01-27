@@ -26,21 +26,24 @@ translations()
 
 function migration(lang) {
 	const importList = lang === 'zh-tw' ? 'zhCountyList, zhDistrictList' : 'enCountyList, enDistrictList'
+	const countyListName = lang === 'zh-tw' ? 'zhCountyList' : 'enCountyList'
+	const districtListName = lang === 'zh-tw' ? 'zhDistrictList' : 'enDistrictList'
+
 	const fmtData =
 		lang === 'zh-tw'
 			? zhData.map(({ zipcode, county, city: district }) =>
-					prettify({
-						county: `zhCountyList[${zhCountyList.indexOf(county)}]`,
-						district: `zhDistrictList[${zhDistrictList.indexOf(district)}]`,
-						zipcode: `zipcodeList[${zipcodeList.indexOf(zipcode.toString())}]`,
-					})
+					JSON.stringify([
+						zhCountyList.indexOf(county),
+						zhDistrictList.indexOf(district),
+						zipcodeList.indexOf(zipcode.toString()),
+					])
 				)
 			: enData.map(({ zipcode, county, city: district }) =>
-					prettify({
-						county: `enCountyList[${enCountyList.indexOf(county)}]`,
-						district: `enDistrictList[${enDistrictList.indexOf(district)}]`,
-						zipcode: `zipcodeList[${zipcodeList.indexOf(zipcode.toString())}]`,
-					})
+					JSON.stringify([
+						enCountyList.indexOf(county),
+						enDistrictList.indexOf(district),
+						zipcodeList.indexOf(zipcode.toString()),
+					])
 				)
 
 	fs.writeFileSync(
@@ -48,9 +51,15 @@ function migration(lang) {
 		`import type { TwZipcodeData } from '../typed'
 import { ${importList}, zipcodeList } from './list'
 
-export default [
+const data = [
 	${fmtData.join(',\n\t')}
-] as TwZipcodeData[]`
+]
+
+export default data.map(([c, d, z]) => ({
+	county: ${countyListName}[c],
+	district: ${districtListName}[d],
+	zipcode: zipcodeList[z]
+})) as TwZipcodeData[]`
 	)
 
 	console.log(`${lang} 已寫入`)
@@ -59,11 +68,11 @@ export default [
 function translations() {
 	const { zipcodes, counties } = twzipcode('en')
 	const countyList = counties.map(({ id, name }) =>
-		prettify([`zhCountyList[${zhCountyList.indexOf(id)}]`, `enCountyList[${enCountyList.indexOf(name)}]`])
+		JSON.stringify([zhCountyList.indexOf(id), enCountyList.indexOf(name)])
 	)
 	// 把重複的 key 篩掉
 	const districtList = [...new Map(zipcodes.map(({ id, city: district }) => [id.slice(6), district]))].map(([k, v]) =>
-		prettify([`zhDistrictList[${zhDistrictList.indexOf(k)}]`, `enDistrictList[${enDistrictList.indexOf(v)}]`])
+		JSON.stringify([zhDistrictList.indexOf(k), enDistrictList.indexOf(v)])
 	)
 
 	fs.writeFileSync(
@@ -73,27 +82,26 @@ import { zhCountyList, zhDistrictList, enCountyList, enDistrictList } from './li
 
 const countyZhToEn = [
 	${countyList.join(',\n\t')}
-] as [County, County][]
+]
+
 export const countyTranslations = new Map<County, County>(
-	[countyZhToEn, countyZhToEn.map(c => [c[1], c[0]] as const)].flat()
+	[
+		countyZhToEn.map(([zh, en]) => [zhCountyList[zh], enCountyList[en]]),
+		countyZhToEn.map(([zh, en]) => [enCountyList[en], zhCountyList[zh]])
+	].flat() as [County, County][]
 )
 
 const districtZhToEn = [
 	${districtList.join(',\n\t')}
-] as [District, District][]
+]
+
 export const districtTranslations = new Map<District, District>(
-	[districtZhToEn, districtZhToEn.map(d => [d[1], d[0]] as const)].flat()
+	[
+		districtZhToEn.map(([zh, en]) => [zhDistrictList[zh], enDistrictList[en]]),
+		districtZhToEn.map(([zh, en]) => [enDistrictList[en], zhDistrictList[zh]])
+	].flat() as [District, District][]
 )`
 	)
 
 	console.log(`translations 已寫入`)
-}
-
-function prettify(data) {
-	return JSON.stringify(data)
-		.replaceAll(/({|:|,)/g, '$1 ')
-		.replace('}', ' }')
-		.replaceAll(/"(zipcode|county|district)"/g, '$1')
-		.replaceAll(']"', ']')
-		.replaceAll(/"(z|en)/g, '$1') // zhXXXList, enXXXList
 }
