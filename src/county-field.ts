@@ -20,6 +20,10 @@ export class CountyField extends LitElement {
 	private _counties: County[] = []
 
 	updated(changedProps: PropertyValues) {
+		if (changedProps.has('lang') && !!changedProps.get('lang')) {
+			this.reload()
+		}
+
 		if (changedProps.has('value')) {
 			this.dispatchEvent(
 				new CustomEvent('update:county', {
@@ -31,8 +35,8 @@ export class CountyField extends LitElement {
 		}
 	}
 
-	public reload(lang: Lang) {
-		this._counties = (lang !== 'en' ? zhCountyList : enCountyList) as unknown as County[]
+	public reload() {
+		this._counties = (this.lang !== 'en' ? zhCountyList : enCountyList) as unknown as County[]
 		this._updateOptions()
 	}
 
