@@ -1,6 +1,5 @@
 {
 	"name": "twzipcode-webcomponent",
-	"private": true,
 	"version": "0.0.1",
 	"type": "module",
 	"main": "dist/index.js",
@@ -16,7 +15,7 @@
 		"lit": "^3.3.2"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.3.11",
+		"@biomejs/biome": "^2.3.13",
 		"twzipcode-data": "^2.0.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.1",
