@@ -5,17 +5,19 @@ import type { CountyField } from './county-field'
 import enData from './data/en'
 import zhData from './data/zh-tw'
 import type { DistrictField } from './district-field'
-import type { County, District, Field, IgnoreDistricts, IgonreOptions, Lang, TwZipcodeData } from './typed'
+import type { County, District, IgnoreDistricts, Lang, TwZipcodeData } from './typed'
 import type { ZipcodeField } from './zipcode-field'
 
 @customElement('twzipcode-fieldset')
 export class TwzipcodeFieldset extends LitElement {
 	@property({ type: String }) lang: Lang = 'zh-tw'
 	@property({ type: Object, attribute: 'default-values' }) defaultValues?: TwZipcodeData
-	@property({ type: Array, attribute: 'ignore-options' }) ignoreOptions?: IgonreOptions
+	@property({ type: Array, attribute: 'ignore-counties' }) ignoreCounties: County[] = []
+	@property({ type: Object, attribute: 'ignore-districts' }) ignoreDistricts: IgnoreDistricts = {}
 
 	@state() private _data: TwZipcodeData[] = zhData
 	@state() value: Partial<TwZipcodeData> = { zipcode: undefined, county: undefined, district: undefined }
+	@state() private _lastValue = ''
 
 	@query('zipcode-field') private $_zipcode?: ZipcodeField
 	@query('county-field') private $_county?: CountyField
@@ -25,28 +27,34 @@ export class TwzipcodeFieldset extends LitElement {
 	private readonly _districtUpdateHandler = this._handleDistrictUpdate.bind(this)
 	private readonly _zipcodeUpdateHandler = this._handleZipcodeUpdate.bind(this)
 
-	attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-		if (oldValue === newValue) {
-			return
+	willUpdate(changedProps: PropertyValues) {
+		if (changedProps.has('lang')) {
+			this._data = this.lang !== 'en' ? zhData : enData
+			;[this.$_zipcode, this.$_county, this.$_district].forEach($elem => {
+				if ($elem) {
+					$elem.lang = this.lang
+				}
+			})
 		}
 
-		requestAnimationFrame(() => {
-			switch (name) {
-				case 'lang':
-					this._data = newValue !== 'en' ? zhData : enData
-					;[this.$_zipcode, this.$_county, this.$_district].forEach($elem => {
-						if ($elem) {
-							$elem.lang = newValue as Lang
-						}
-					})
-					break
-				case 'default-values':
-					this._writeDefaultValues(newValue)
-					break
-				case 'ignore-options':
-					this._updateIgnoreOpts(newValue)
+		if (changedProps.has('defaultValues') && this.defaultValues) {
+			const { zipcode, county, district } = this.defaultValues
+			if (
+				this._data.some(({ zipcode: z, county: c, district: d }) => z === zipcode && c === county && d === district)
+			) {
+				this.value = { zipcode, county, district }
 			}
-		})
+		}
+	}
+
+	updated(changedProps: PropertyValues) {
+		if (changedProps.has('value')) {
+			this._dispatch(this.value as TwZipcodeData)
+		}
+
+		if (changedProps.has('value') || changedProps.has('ignoreCounties') || changedProps.has('ignoreDistricts')) {
+			this._syncChildren()
+		}
 	}
 
 	connectedCallback() {
@@ -69,65 +77,51 @@ export class TwzipcodeFieldset extends LitElement {
 		this.removeEventListener('update:district', this._districtUpdateHandler)
 	}
 
-	updated(changedProps: PropertyValues) {
-		if (changedProps.has('_data')) {
-			this.$_county?.reload()
+	private _syncChildren() {
+		if (this.$_zipcode) {
+			this.$_zipcode.value = this.value.zipcode ?? ''
 		}
-
-		if (changedProps.has('value')) {
-			this._dispatch(this.value as TwZipcodeData)
+		if (this.$_county) {
+			this.$_county.value = this.value.county ?? ''
+			this.$_county.ignoreOptions = this.ignoreCounties
 		}
-	}
-
-	private _writeDefaultValues(newValue: string) {
-		const { zipcode, county, district } = this._parseJSON(newValue, {} as TwZipcodeData)
-		if (this._data.some(({ zipcode: z, county: c, district: d }) => z === zipcode && c === county && d === district)) {
-			this.$_zipcode?.write(zipcode)
-			this.$_county?.select(county)
-			//等 _handleCountyUpdate 跑完
-			requestAnimationFrame(() => this.$_district?.select(district))
-		}
-	}
-
-	private _updateIgnoreOpts(newValue: string) {
-		const ignoreOpts = this._parseJSON(newValue, []) as IgonreOptions
-		const { c = [], d = [] } = Object.groupBy(ignoreOpts, opt => (typeof opt === 'string' ? 'c' : 'd'))
-
-		this.$_county?.ignore(c as County[])
-		this.$_district?.ignore(d as IgnoreDistricts[])
-	}
-
-	private _parseJSON<T>(value: string, fallback: T): T {
-		try {
-			return JSON.parse(value) ?? fallback
-		} catch (error) {
-			console.warn('Failed to parse JSON:', value, error)
-			return fallback
+		if (this.$_district) {
+			this.$_district.value = this.value.district ?? ''
+			this.$_district.districts = this.value.county
+				? this._data.filter(({ county: c }) => c === this.value.county).map(({ district }) => district)
+				: []
+			this.$_district.ignoreOptions = this.value.county ? (this.ignoreDistricts[this.value.county] ?? []) : []
 		}
 	}
 
 	private _handleZipcodeUpdate(e: Event) {
-		this._updateValue('zipcode', e as CustomEvent)
+		const zipcode = (e as CustomEvent).detail.value
+		if (!zipcode || zipcode.length !== 3) {
+			return
+		}
+
+		const target = this._data.find(d => d.zipcode === zipcode)
+		if (target) {
+			this.value = target
+		}
 	}
 
 	private _handleCountyUpdate(e: Event) {
-		const county = this._updateValue('county', e as CustomEvent) as County
-		this.$_district?.reload(this._data, county)
+		this.value = { county: (e as CustomEvent).detail.value, district: undefined, zipcode: undefined }
 	}
 
 	private _handleDistrictUpdate(e: Event) {
-		const district = this._updateValue('district', e as CustomEvent) as District
-		this.$_zipcode?.findAndWrite(this._data, { county: this.value.county as County, district })
-	}
+		const district = (e as CustomEvent).detail.value as District
+		const zipcode = this._data.find(
+			({ county, district: d }) => county === this.value.county && d === district
+		)?.zipcode
 
-	private _updateValue(key: Field, { detail }: CustomEvent): string {
-		this.value = { ...this.value, [key]: detail.value }
-		return detail.value
+		this.value = { ...this.value, district, zipcode }
 	}
 
 	private _dispatch(value: TwZipcodeData) {
-		// pending
-		if (Object.values(value).some(v => !v)) {
+		const current = JSON.stringify(value)
+		if (current === this._lastValue || Object.values(value).some(v => !v)) {
 			return
 		}
 
@@ -135,6 +129,7 @@ export class TwzipcodeFieldset extends LitElement {
 			return z === value.zipcode && c === value.county && d === value.district
 		})
 		if (isExist) {
+			this._lastValue = current
 			this.dispatchEvent(new CustomEvent('done', { detail: { value } }))
 		}
 	}

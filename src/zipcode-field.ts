@@ -1,6 +1,6 @@
 import { html, LitElement, PropertyValues } from 'lit'
-import { customElement, property, state } from 'lit/decorators.js'
-import type { Lang, TwZipcodeData, Zipcode } from './typed'
+import { customElement, property } from 'lit/decorators.js'
+import type { Lang, Zipcode } from './typed'
 
 @customElement('zipcode-field')
 export class ZipcodeField extends LitElement {
@@ -8,12 +8,10 @@ export class ZipcodeField extends LitElement {
 	@property({ type: String }) name = 'zipcode'
 	@property({ type: String }) placeholder = ''
 
-	@state() lang: Lang = 'zh-tw'
-	@state() value = '' as Zipcode | ''
+	@property({ type: String, attribute: false }) lang: Lang = 'zh-tw'
+	@property({ type: String, attribute: false }) value = '' as Zipcode | ''
 
-	public readonly tag = 'zipcode'
-
-	updated(changedProps: PropertyValues) {
+	willUpdate(changedProps: PropertyValues) {
 		if (changedProps.has('value')) {
 			this.dispatchEvent(
 				new CustomEvent('update:zipcode', {
@@ -23,16 +21,6 @@ export class ZipcodeField extends LitElement {
 				})
 			)
 		}
-	}
-
-	public findAndWrite(data: TwZipcodeData[], current: Pick<TwZipcodeData, 'county' | 'district'>) {
-		const value =
-			data.find(({ county, district }) => county === current.county && district === current.district)?.zipcode ?? ''
-		this.write(value)
-	}
-
-	public write(value: Zipcode | '') {
-		this.value = value
 	}
 
 	createRenderRoot() {

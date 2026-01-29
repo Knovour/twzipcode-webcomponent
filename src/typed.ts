@@ -8,10 +8,19 @@ export type Lang = 'zh-tw' | 'en'
 export type Field = 'zipcode' | 'county' | 'district'
 
 export type IgnoreDistricts = Partial<Record<County, District[]>>
-export type IgonreOptions = (County | IgnoreDistricts)[]
 
 export type TwZipcodeData = {
 	zipcode: Zipcode
 	county: County
 	district: District
+}
+
+export type TwzipcodeEventMap = {
+	'update:zipcode': CustomEvent<{ value: string }>
+	'update:county': CustomEvent<{ value: string }>
+	'update:district': CustomEvent<{ value: string }>
+}
+
+export interface TwzipcodeCustomEvent<T> extends CustomEvent<T> {
+	target: (EventTarget & { value: string }) | null
 }

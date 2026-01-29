@@ -1,7 +1,7 @@
 import { html, LitElement, PropertyValues } from 'lit'
 import { customElement, property, query, state } from 'lit/decorators.js'
-import { countyTranslations, districtTranslations } from './data/translations'
-import type { County, District, IgnoreDistricts, Lang, TwZipcodeData } from './typed'
+import { districtTranslations } from './data/translations'
+import type { District, Lang } from './typed'
 
 @customElement('district-field')
 export class DistrictField extends LitElement {
@@ -9,14 +9,21 @@ export class DistrictField extends LitElement {
 	@property({ type: String }) name = 'district'
 	@property({ type: String }) placeholder = '---'
 
-	@state() lang: Lang = 'zh-tw'
-	@state() value = '' as District | ''
-	@state() private _ignoreList: IgnoreDistricts = {}
+	@property({ type: String, attribute: false }) lang: Lang = 'zh-tw'
+	@property({ type: String, attribute: false }) value = '' as District | ''
+	@property({ type: Array, attribute: false }) districts: District[] = []
+	@property({ type: Array, attribute: false }) ignoreOptions: District[] = []
+
 	@state() private _options: District[] = []
 
 	@query('select') private $_select: HTMLSelectElement
 
-	public readonly tag = 'district'
+	willUpdate(changedProps: PropertyValues) {
+		if (changedProps.has('districts') || changedProps.has('ignoreOptions')) {
+			this._updateOptions()
+			this._select(this.value)
+		}
+	}
 
 	updated(changedProps: PropertyValues) {
 		if (changedProps.has('value')) {
@@ -30,49 +37,21 @@ export class DistrictField extends LitElement {
 		}
 	}
 
-	public reload(data: TwZipcodeData[], county: County) {
-		if (!county) {
-			return
-		}
-
-		let opts = data.filter(({ county: c }) => c === county).map(({ district }) => district)
-		if (county in this._ignoreList) {
-			const ignoreDistricts = this._ignoreList[county]
-			opts = opts.filter(d => !ignoreDistricts?.includes(d as District))
-		}
-
-		this._options = opts
-		this.select()
-	}
-
-	public ignore(list: IgnoreDistricts[]) {
-		let ignoreList = list.reduce((acc, opt) => ({ ...acc, ...opt }), {})
-		if (this.lang === 'en') {
-			ignoreList = (Object.entries(ignoreList) as [County, District[]][]).reduce((acc, [key, value]) => {
-				return {
-					...acc,
-					[countyTranslations.get(key) ?? key]: value.map(v => districtTranslations.get(v) ?? v),
-				}
-			}, {})
-		}
-
-		this._ignoreList = ignoreList
-	}
-
-	public findAndSelect(data: TwZipcodeData[], zipcode: string) {
-		const value = zipcode.length === 3 ? (data.find(({ zipcode: z }) => z === zipcode)?.district ?? '') : ''
-		this.select(value)
-	}
-
-	public select(value: District | '' = '') {
-		this.value = value && this._options.includes(value) ? value : ''
-		if (!this.value) {
-			this.$_select.value = ''
-		}
+	private _updateOptions() {
+		const ignoreList =
+			this.lang !== 'en' ? this.ignoreOptions : this.ignoreOptions.map(v => districtTranslations.get(v) ?? v)
+		this._options = this.districts.filter(d => !ignoreList.includes(d))
 	}
 
 	private _handleEvent(e: { target: HTMLSelectElement }) {
-		this.select(e.target.value as District)
+		this._select(e.target.value as District)
+	}
+
+	private _select(value: District | '' = '') {
+		this.value = value && this._options.includes(value) ? value : ''
+		if (!this.value && this.$_select) {
+			this.$_select.value = ''
+		}
 	}
 
 	createRenderRoot() {
