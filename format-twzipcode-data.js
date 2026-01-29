@@ -25,7 +25,6 @@ migration('en')
 translations()
 
 function migration(lang) {
-	const importList = lang === 'zh-tw' ? 'zhCountyList, zhDistrictList' : 'enCountyList, enDistrictList'
 	const countyListName = lang === 'zh-tw' ? 'zhCountyList' : 'enCountyList'
 	const districtListName = lang === 'zh-tw' ? 'zhDistrictList' : 'enDistrictList'
 
@@ -49,17 +48,11 @@ function migration(lang) {
 	fs.writeFileSync(
 		`src/data/${lang}.ts`,
 		`import type { TwZipcodeData } from '../typed'
-import { ${importList}, zipcodeList } from './list'
+import { ${countyListName}, ${districtListName}, zipcodeList } from './list'
 
-const data = [
-	${fmtData.join(',\n\t')}
-]
+const data = [${fmtData.join(',')}]
 
-export default data.map(([c, d, z]) => ({
-	county: ${countyListName}[c],
-	district: ${districtListName}[d],
-	zipcode: zipcodeList[z]
-})) as TwZipcodeData[]`
+export default data.map(([c, d, z]) => ({ county: ${countyListName}[c], district: ${districtListName}[d], zipcode: zipcodeList[z] })) as TwZipcodeData[]`
 	)
 
 	console.log(`${lang} 已寫入`)
@@ -80,26 +73,15 @@ function translations() {
 		`import type { County, District } from '../typed'
 import { zhCountyList, zhDistrictList, enCountyList, enDistrictList } from './list'
 
-const countyZhToEn = [
-	${countyList.join(',\n\t')}
-]
+const countyZhToEn = [${countyList.join(',')}]
+const districtZhToEn = [${districtList.join(',')}]
 
 export const countyTranslations = new Map<County, County>(
-	[
-		countyZhToEn.map(([zh, en]) => [zhCountyList[zh], enCountyList[en]]),
-		countyZhToEn.map(([zh, en]) => [enCountyList[en], zhCountyList[zh]])
-	].flat() as [County, County][]
+	countyZhToEn.flatMap(([zh, en]) => [[zhCountyList[zh], enCountyList[en]], [enCountyList[en], zhCountyList[zh]]]) as [County, County][]
 )
 
-const districtZhToEn = [
-	${districtList.join(',\n\t')}
-]
-
 export const districtTranslations = new Map<District, District>(
-	[
-		districtZhToEn.map(([zh, en]) => [zhDistrictList[zh], enDistrictList[en]]),
-		districtZhToEn.map(([zh, en]) => [enDistrictList[en], zhDistrictList[zh]])
-	].flat() as [District, District][]
+	districtZhToEn.flatMap(([zh, en]) => [[zhDistrictList[zh], enDistrictList[en]], [enDistrictList[en], zhDistrictList[zh]]]) as [District, District][]
 )`
 	)
 
