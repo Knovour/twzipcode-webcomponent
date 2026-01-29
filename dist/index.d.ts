@@ -30,8 +30,9 @@ export declare class DistrictField extends LitElement {
     placeholder: string;
     lang: Lang;
     value: District | "";
+    county: County | '';
     districts: District[];
-    ignoreOptions: District[];
+    ignoreOptions: IgnoreDistricts;
     private _options;
     private $_select;
     willUpdate(changedProps: PropertyValues): void;
