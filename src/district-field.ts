@@ -1,7 +1,7 @@
 import { html, LitElement, PropertyValues } from 'lit'
 import { customElement, property, query, state } from 'lit/decorators.js'
-import { districtTranslations } from './data/translations'
-import type { District, Lang } from './typed'
+import { countyTranslations, districtTranslations } from './data/translations'
+import type { County, District, IgnoreDistricts, Lang } from './typed'
 
 @customElement('district-field')
 export class DistrictField extends LitElement {
@@ -11,15 +11,21 @@ export class DistrictField extends LitElement {
 
 	@property({ type: String, attribute: false }) lang: Lang = 'zh-tw'
 	@property({ type: String, attribute: false }) value = '' as District | ''
+	@property({ type: String, attribute: false }) county: County | '' = ''
 	@property({ type: Array, attribute: false }) districts: District[] = []
-	@property({ type: Array, attribute: false }) ignoreOptions: District[] = []
+	@property({ type: Object, attribute: false }) ignoreOptions: IgnoreDistricts = {}
 
 	@state() private _options: District[] = []
 
 	@query('select') private $_select: HTMLSelectElement
 
 	willUpdate(changedProps: PropertyValues) {
-		if (changedProps.has('districts') || changedProps.has('ignoreOptions')) {
+		if (
+			changedProps.has('districts') ||
+			changedProps.has('ignoreOptions') ||
+			changedProps.has('lang') ||
+			changedProps.has('county')
+		) {
 			this._updateOptions()
 			this._select(this.value)
 		}
@@ -38,8 +44,14 @@ export class DistrictField extends LitElement {
 	}
 
 	private _updateOptions() {
-		const ignoreList =
-			this.lang !== 'en' ? this.ignoreOptions : this.ignoreOptions.map(v => districtTranslations.get(v) ?? v)
+		const countyKey = this.lang === 'en' && this.county ? countyTranslations.get(this.county) : this.county
+		if (!countyKey) {
+			this._options = []
+			return
+		}
+
+		const ignoreOptions = this.ignoreOptions[countyKey] ?? []
+		const ignoreList = this.lang === 'en' ? ignoreOptions.map(v => districtTranslations.get(v) ?? v) : ignoreOptions
 		this._options = this.districts.filter(d => !ignoreList.includes(d))
 	}
 

@@ -38,9 +38,9 @@ export class CountyField extends LitElement {
 	}
 
 	private _updateOptions() {
-		const counties = (this.lang !== 'en' ? zhCountyList : enCountyList) as unknown as County[]
+		const counties = (this.lang === 'en' ? enCountyList : zhCountyList) as unknown as County[]
 		const ignoreList =
-			this.lang !== 'en' ? this.ignoreOptions : this.ignoreOptions.map(name => countyTranslations.get(name) ?? name)
+			this.lang === 'en' ? this.ignoreOptions.map(name => countyTranslations.get(name) ?? name) : this.ignoreOptions
 
 		this._options = ignoreList.length ? counties.filter(c => !ignoreList.includes(c)) : counties
 	}

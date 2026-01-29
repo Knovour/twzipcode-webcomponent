@@ -29,7 +29,7 @@ export class TwzipcodeFieldset extends LitElement {
 
 	willUpdate(changedProps: PropertyValues) {
 		if (changedProps.has('lang')) {
-			this._data = this.lang !== 'en' ? zhData : enData
+			this._data = this.lang === 'en' ? enData : zhData
 			;[this.$_zipcode, this.$_county, this.$_district].forEach($elem => {
 				if ($elem) {
 					$elem.lang = this.lang
@@ -87,10 +87,11 @@ export class TwzipcodeFieldset extends LitElement {
 		}
 		if (this.$_district) {
 			this.$_district.value = this.value.district ?? ''
+			this.$_district.county = this.value.county ?? ''
 			this.$_district.districts = this.value.county
 				? this._data.filter(({ county: c }) => c === this.value.county).map(({ district }) => district)
 				: []
-			this.$_district.ignoreOptions = this.value.county ? (this.ignoreDistricts[this.value.county] ?? []) : []
+			this.$_district.ignoreOptions = this.ignoreDistricts
 		}
 	}
 

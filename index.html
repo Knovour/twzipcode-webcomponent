@@ -12,7 +12,7 @@
 		<div>
 			<h5>Default</h5>
 			<twzipcode-fieldset
-				:default-values="JSON.stringify({ zipcode: '300', county: '新竹市', district: '香山區' })"
+				lang="en"
 				:ignore-counties="JSON.stringify(['澎湖縣', '金門縣', '連江縣'])"
 				:ignore-districts="JSON.stringify({ 宜蘭縣: ['釣魚臺列嶼'], 屏東縣: ['琉球鄉'], 臺東縣: ['綠島鄉', '蘭嶼鄉'] })"
 				@done="console.log('done:', $event.detail.value)"
@@ -21,7 +21,7 @@
 		<br>
 		<div>
 			<h5>Custom</h5>
-			<twzipcode-fieldset lang="en">
+			<twzipcode-fieldset>
 				<div>
 					<label>測試</label>
 					<zipcode-field></zipcode-field>
