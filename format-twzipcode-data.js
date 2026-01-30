@@ -64,9 +64,17 @@ function translations() {
 		JSON.stringify([zhCountyList.indexOf(id), enCountyList.indexOf(name)])
 	)
 	// 把重複的 key 篩掉
-	const districtList = [...new Map(zipcodes.map(({ id, city: district }) => [id.slice(6), district]))].map(([k, v]) =>
-		JSON.stringify([zhDistrictList.indexOf(k), enDistrictList.indexOf(v)])
-	)
+	const districtList = [
+		...new Map(
+			zipcodes.map(({ id, city: district }) => {
+				/** en 的 zipcodes 資料結構如下
+				 * { 'id': '100臺北市中正區', 'zipcode': 100, 'county': 'Taipei City', 'city': 'Zhongzheng District' }
+				 * id 前面六個字元是 zipcode 跟 county，去掉之後剩下的才是鄉鎮市區
+				 */
+				return [id.slice(6), district]
+			})
+		),
+	].map(([k, v]) => JSON.stringify([zhDistrictList.indexOf(k), enDistrictList.indexOf(v)]))
 
 	fs.writeFileSync(
 		`src/data/translations.ts`,

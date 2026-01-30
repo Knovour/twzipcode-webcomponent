@@ -38,7 +38,7 @@ import 'twzipcode-webcomponent'
 
 ```html
 <twzipcode-fieldset
-	lang="zh-tw 或 en。預設 zh-tw，目前沒有動態切換語系的功能"
+	lang="zh-tw 或 en。預設 zh-tw，沒有動態切換語系的功能"
 	<!-- 注意臺北（✓）、台北（✗） -->
 	:default-values="JSON.stringify({
 		zipcode: '三個 key',

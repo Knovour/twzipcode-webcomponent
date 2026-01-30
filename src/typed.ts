@@ -1,8 +1,12 @@
 import { enCountyList, enDistrictList, zhCountyList, zhDistrictList, zipcodeList } from './data/list'
 
 export type Zipcode = (typeof zipcodeList)[number]
-export type County = (typeof zhCountyList)[number] | (typeof enCountyList)[number]
-export type District = (typeof zhDistrictList)[number] | (typeof enDistrictList)[number]
+export type ZhCounty = (typeof zhCountyList)[number]
+export type EnCounty = (typeof enCountyList)[number]
+export type County = ZhCounty | EnCounty
+export type ZhDistrict = (typeof zhDistrictList)[number]
+export type EnDistrict = (typeof enDistrictList)[number]
+export type District = ZhDistrict | EnDistrict
 
 export type Lang = 'zh-tw' | 'en'
 export type Field = 'zipcode' | 'county' | 'district'
