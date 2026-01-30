@@ -39,14 +39,13 @@ import 'twzipcode-webcomponent'
 ```html
 <twzipcode-fieldset
 	lang="zh-tw 或 en。預設 zh-tw，目前沒有動態切換語系的功能"
-	<!-- 以下兩個選項需要轉成 JSON.stringify 後的樣式 -->
 	<!-- 注意臺北（✓）、台北（✗） -->
 	:default-values="JSON.stringify({
 		zipcode: '三個 key',
 		county: '都有值',
 		district: '才會生效',
 	})"
-	<!-- 忽略選項：縣市（純字串）或是特定縣市下的鄉鎮市區，這兩項給中文就好，en 下會自動轉換 -->
+	<!-- 忽略選項：縣市或是特定縣市下的鄉鎮市區，這兩項給中文就好，en 下會自動轉換 -->
 	:ignore-counties="JSON.stringify(['澎湖縣', '金門縣', '連江縣'])"
 	:ignore-districts="JSON.stringify({ 宜蘭縣: ['釣魚臺列嶼'], 屏東縣: ['琉球鄉'], 臺東縣: ['綠島鄉', '蘭嶼鄉'] })"
 >
